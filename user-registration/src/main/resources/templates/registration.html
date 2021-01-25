@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+<title>User registration form</title>
+
+<link rel="stylesheet" href="/css/bootstrap.css">
+  
+<script type="text/javascript" src="/js/jquery-2.1.4.min.js"></script>
+<script type="text/javascript" src="/js/bootstrap.js"></script>
+<script type="text/javascript" src="/js/jquery.validate.min.js"></script>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+.row {
+  margin-left:-5px;
+  margin-right:-5px;
+}
+  
+.column {
+  float: left;
+  width: 50%;
+  padding: 5px;
+}
+
+/* Clearfix (clear floats) */
+.row::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  width: 100%;
+  border: 1px solid #ddd;
+}
+
+th, td {
+  text-align: left;
+  padding: 16px;
+}
+
+
+</style>
+<script type="text/javascript">
+$(document).ready(function() {
+	
+	//Add new method for validation
+	jQuery.validator.addMethod("lettersonly", function(value, element) {
+        return this.optional(element) || /^[a-z\s]+$/i.test(value);
+        }, '<p style="color:red;font-weight:bold">Alphabetical characters required!</p>');
+	
+	
+	//Define custom messages
+	jQuery.extend(jQuery.validator.messages, {
+	    required: '<p style="color:red;font-weight:bold">Required!</p>',
+	    number : '<p style="color:red;font-weight:bold">Numeric value required!</p>',
+	     minlength :'<p style="color:red;font-weight:bold">Password should be at least 7 characters long!</p>',
+	     equalTo : '<p style="color:red;font-weight:bold">Passwords mismatch!</p>'
+	  });
+	
+	//Modify default settings for validation
+	jQuery.validator.setDefaults({
+	rules: { 
+		
+	"confirmPwdLbl": {equalTo: "#passwordLbl"},
+    "phoneTxt"     : { required: false,  number: true },
+    "personName"   : { required: true,lettersonly: true },
+    "addr1"        : { required: true },
+    "city"         : { required: true },
+    "zipcode"      : { required: true, number:true },
+    "emailTxt"     : { required: true },
+    "passwordTxt"  : { minlength : 7 },
+	"confirmPwdTxt": { equalTo: "#passwordTxtId" },
+     debug: true,
+	 success: "valid"
+		}
+		    });
+	
+	//Form validation...
+	var form = $( "#phoneInputFormId" );
+	form.validate();
+	
+	
+	//Click form submit button
+	$( "#submitBtnId" ).on('click',function() {
+	 	 
+		  if (form.valid()) { //Register user only if the form is valid.
+			
+			 registerUser();	
+	        } 
+		  
+		});
+	
+	
+	//Register new user...
+	function registerUser(){
+		
+		$.ajax({
+            url: '/user',
+            type: "POST",
+            
+            data: {name: $('#nameId').val(),
+                country: $('.countryCls option:selected').val(), 
+                state: $('.stateCls option:selected').val(), 
+                address1: $('#addr1Id').val(),
+                address2:$('#addr2Id').val(),
+                city:$('#cityId').val(),
+                zipcode : $('#zipcodeId').val(),
+                phone: $('#phoneId').val(),
+                email : $('#emailTxtId').val(),
+                password: $('#passwordTxtId').val()
+            },
+            
+            success: function () {
+            	location.href = "http://localhost:8585/login";
+            },
+            error: function () {
+                $('.wait').hide();
+                var errormsg="Error in adding user!";
+                $('#addusermsglbl').html(errormsg);
+                $('#addusermsglbl').prop("hidden",false);
+                // alert("Response  " + xhr + "Error :" + err);
+
+            }
+
+        });
+	}
+
+	
+	
+	var data="";
+	//Fire event to get the states when a country is selected...
+	/* $('.countryCls').on('change',function(){
+		data= $(this).val();
+		  alert(data); 
+		getStatesForCountry();
+	}); */
+	
+	
+	
+	//Get the states for the selected country in the drop down list
+	 function getStatesForCountry() {
+		 alert("inside getStatesforcountry "+data); 
+        $.ajax({
+            url: '/states',
+            type: "GET",
+            data: {countryName: data},
+            success: function (xhres) {
+				alert("Success");
+
+                
+            },
+            error: function (xhr, err) {
+                alert("Response  " + xhr + "Error :" + err);
+
+            }
+            
+        });
+
+    } 
+	
+	
+	
+
+});
+</script>
+    
+</head>
+
+
+<body>
+
+<h2 align="center">CREATING NEW ACCOUNT</h2>
+ <p align="center">When you are new, you can create your account here. Enter your details below.</p>
+<form id="phoneInputFormId" method = "POST" class="col-md-12" >
+<div class="row">
+  <div class="column">
+ <div ><h3>PERSONAL DATA</h3></div><br>
+    <table border="0">
+              <thead>
+                  <tr>
+                      <th></th>
+                      <th></th>
+                  </tr>
+              </thead>
+              <tbody>
+                  <tr>
+                      <td><label for="nameLbl">Name</label>&nbsp;&nbsp;</td>
+                      <td><br><input type="text" name="personName" class="form-control input-sm" id="nameId" /><br><br></td>
+                  </tr>
+                  <tr>
+                      <td><label for="countryLbl">Country</label> &nbsp;&nbsp;</td>
+                      <td><!-- <select class="countryCls" name="countryName">
+                              <option value="Usa">Usa</option>
+                              <option value="Canada">Canada</option>
+                              <option value="SriLanka">SriLanka</option>
+                          </select><br><br> -->
+			
+			<select th:field="*{countries}" class="countryCls">
+				<!-- <option value="">Select Country</option> -->
+				<option th:each="country : ${countries}" th:value="${country.name}" th:text="${country.name}" ></option>
+		    </select>
+                          
+                          </td>
+                  </tr>
+                  <tr>
+                      <td><label for="stateLbl">State</label>&nbsp;&nbsp;</td>
+                      <td><!-- <select class="stateCls" name="stateName">
+                              <option value="Atlanta">Atlanta</option>
+                              <option value="Canada">Canada</option>
+                              <option value="SriLanka">SriLanka</option>
+                          </select> -->
+            <!--          <select th:field="*{states}" name="stateName">
+			      <option th:each="state : ${states.entrySet()}" th:value="${state.key}" th:text="${state.key}"></option>
+			</select>  -->
+                      <select th:field="*{states}" class="stateCls">
+				<!-- <option value="">Select Country</option> -->
+				<option th:each="state : ${states}" th:value="${state.name}" th:text="${state.name}"></option>
+		    </select>
+                          
+                          <br><br></td>
+                  </tr>
+                  <tr>
+                      <td> <label for="addr1Lbl">Address1</label>&nbsp;&nbsp;</td>
+                      <td><input type="text" name="addr1" class="form-control input-sm" id="addr1Id" /><br><br></td>
+                  </tr>
+                  <tr>
+                     <td> <label for="addr2Lbl">Address2</label>&nbsp;&nbsp;</td>
+                      <td><input type="text" name="addr2" class="form-control input-sm" id="addr2Id" /><br><br></td>
+                  </tr>
+                   <tr>
+                      <td><label for="cityLbl">City</label>&nbsp;&nbsp;</td>
+                      <td><input type="text" name="city" class="form-control input-sm" id="cityId" /><br><br></td>
+                  </tr>
+                  <tr>
+                       <td><label for="zipCodeLbl">Zip code</label>&nbsp;&nbsp;</td>
+                      <td><input type="text" name="zipcode" class="form-control input-sm" id="zipcodeId" /><br><br></td>
+                  </tr>
+                  <tr>
+                      <td><label for="phoneLbl">Phone number</label>&nbsp;&nbsp;</td>
+                      <td><input type="text" name="phoneTxt" class="form-control input-sm" id="phoneId" /><br><br></td>
+                  </tr>
+                  <tr>
+                      <td></td>
+                      <td> 
+                          
+                          
+                     
+                     
+                      </td>
+                      
+                  </tr>
+                  
+              </tbody>
+          </table>
+  </div>
+  <div class="column">
+  <div><h3>LOGIN DATA</h3></div>
+  <small>Please enter your e-mail address and choose a password to create an account</small>
+    <table border="0">
+          
+           <tbody>
+               <tr>
+                   <td><label for="emailLbl">Email</label>&nbsp;&nbsp;</td>
+                   <td><br><input type="email" name="emailTxt" class="form-control input-sm" id="emailTxtId" /><br><br></td>
+               </tr>
+               <tr>
+                   <td><label for="passwordLbl">Password</label> &nbsp;&nbsp;</td>
+                   <td><input type="password" name="passwordTxt" class="form-control input-sm" id="passwordTxtId" /><br><br></td>
+               </tr>
+               
+               <tr>
+                   <td> <label for="confirmPwdLbl">Confirm password</label>&nbsp;&nbsp;</td>
+                   <td><input type="password" name="confirmPwdTxt" class="form-control input-sm" id="confirmPwdTxtId" /><br><br></td>
+               </tr>
+               
+           
+           </tbody>
+       </table>
+     <input class="btn btn-primary" type="button" value="Submit" name="submitBtnName" id="submitBtnId" /> 
+  </div>
+</div>
+</form>
+</body>
+</html>
