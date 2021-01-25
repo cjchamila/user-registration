@@ -2,7 +2,7 @@
 Login url : http://localhost:8585/login
 Registration url : http://localhost:8585/registration
 
-Please run the following scripts in a mysql 5.7 instance (since the data.sql is not running them)
+Please run the following scripts in a mysql 5.7 instance (since Spring is not executing the data.sql file for some reason which I couldn't find)
 
 use userregdb;
   INSERT INTO country (id,name) VALUES
